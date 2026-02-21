@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowRight, CheckCircle2, Clock, Loader2, Download, Share2, Edit3 } from "lucide-react";
 import { sampleBrdSections, pipelineSteps as initialSteps } from "@/lib/mockData";
+import { exportBrdAsPdf, exportBrdAsDocx } from "@/lib/exportBrd";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -67,8 +68,24 @@ const BrdGenerationPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleExport = (format: string) => {
-    toast({ title: `Exporting as ${format}`, description: "Your BRD document is being prepared..." });
+  const handleExport = async (format: string) => {
+    const visibleData = sampleBrdSections.slice(0, visibleSections);
+    if (visibleData.length === 0) {
+      toast({ title: "Nothing to export", description: "Wait for BRD sections to generate first.", variant: "destructive" });
+      return;
+    }
+    toast({ title: `Exporting as ${format}...`, description: "Your BRD document is being prepared." });
+    try {
+      if (format === "PDF") {
+        exportBrdAsPdf(visibleData, accuracy);
+      } else {
+        await exportBrdAsDocx(visibleData, accuracy);
+      }
+      toast({ title: `${format} exported!`, description: "File downloaded successfully." });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Export failed", description: String(e), variant: "destructive" });
+    }
   };
 
   return (
